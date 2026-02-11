@@ -1,0 +1,5 @@
+SELECT n.name, n.score, n.distance 
+FROM attractions a
+JOIN nearby_food n ON a.attraction_id = n.attraction_id
+WHERE a.name = '比日景区' AND n.score > 4.0
+ORDER BY n.distance;

@@ -1,0 +1,10 @@
+import pandas as pd
+
+attractions = pd.read_csv("attractions.csv")
+
+result = attractions[["name", "address"]]
+
+result.to_csv("result.csv", index=False)
+
+# 显示结果
+print(result)

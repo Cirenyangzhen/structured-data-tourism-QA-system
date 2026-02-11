@@ -1,0 +1,33 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+using namespace std;
+
+struct Attraction {
+    string attraction_ID;
+    string name;
+    string address;
+};
+
+int main() {
+    ifstream attractions_file("attractions.csv");
+    ofstream result_file("result.csv");
+    
+    // 写入标题
+    result_file << "name,address" << endl;
+    
+    string line;
+    getline(attractions_file, line); // 跳过标题行
+    
+    while (getline(attractions_file, line)) {
+        size_t id_end = line.find(',');
+        size_t name_end = line.find(',', id_end + 1);
+        size_t addr_end = line.find(',', name_end + 1);
+        
+        string name = line.substr(id_end + 1, name_end - id_end - 1);
+        string address = line.substr(name_end + 1, addr_end - name_end - 1);
+        
+        result_file << name << "," << address << endl;
+    }
+    return 0;
+}

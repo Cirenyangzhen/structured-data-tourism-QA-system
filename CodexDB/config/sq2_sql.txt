@@ -1,0 +1,6 @@
+SELECT r.review_text, r.rating 
+FROM attractions a
+JOIN reviews r ON a.attraction_id = r.attraction_id
+WHERE a.name = '巴松措'
+ORDER BY r.rating DESC
+LIMIT 3;

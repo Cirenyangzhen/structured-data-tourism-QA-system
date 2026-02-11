@@ -1,0 +1,18 @@
+import pandas as pd
+
+# 读取景点表和评论表
+attractions = pd.read_csv("attractions.csv")
+reviews = pd.read_csv("reviews.csv")
+
+# 过滤巴松措景点并关联评论
+basongcu = attractions[attractions["name"] == "巴松措"]
+merged = pd.merge(basongcu, reviews, on="attraction_id")
+
+# 按评分降序排序，取前3条
+top_reviews = merged.sort_values("rating", ascending=False).head(3)
+
+# 提取评论内容和评分，保存结果
+top_reviews[["review_text", "rating"]].to_csv("result.csv", index=False)
+
+# 显示结果
+print(top_reviews[["review_text", "rating"]])
