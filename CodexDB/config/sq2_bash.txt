@@ -1,0 +1,12 @@
+#!/bin/bash
+# 获取巴松措的ID
+attr_id=$(grep '巴松措' attractions.csv | cut -d',' -f1)
+
+# 关联评论并排序
+join -t',' -1 1 -2 2 \
+  <(echo "$attr_id") \
+  <(tail -n +2 reviews.csv | sort -t',' -k2) \
+  | sort -t',' -k5 -nr \
+  | head -3 \
+  | cut -d',' -f4,5 \
+  | sed '1i review_text,rating' > result.csv

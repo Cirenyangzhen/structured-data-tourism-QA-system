@@ -1,0 +1,11 @@
+#!/bin/bash
+# 获取比日景区的ID
+attr_id=$(grep '比日景区' attractions.csv | cut -d',' -f1)
+# 关联餐厅并过滤
+join -t',' -1 1 -2 2 \
+  <(echo "$attr_id") \
+  <(tail -n +2 nearby_food.csv | sort -t',' -k2) \
+  | awk -F',' '$4 > 4.0' \
+  | sort -t',' -k5 -n \
+  | cut -d',' -f3,4,5 \
+  | sed '1i Name,Score,Distance' > result.csv

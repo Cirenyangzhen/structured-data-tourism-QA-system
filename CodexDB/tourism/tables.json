@@ -1,0 +1,135 @@
+[
+   {
+      "column_names": [
+         [ -1, "*" ],
+         [ 0, "hotel_id" ],
+         [ 0, "name" ],
+         [ 0, "rating" ],
+         [ 0, "address" ],
+         [ 0, "contact" ]
+      ],
+      "column_names_original": [
+         [ -1, "*" ],
+         [ 0, "hotel_id" ],
+         [ 0, "name" ],
+         [ 0, "rating" ],
+         [ 0, "address" ],
+         [ 0, "contact" ]
+      ],
+      "column_types": [
+         "number",
+         "text",
+         "real",
+         "text",
+         "text"
+      ],
+      "db_id": "tourism_db",  
+      "foreign_keys": [],
+      "primary_keys": [ 1 ],
+      "table_names": [ "hotels" ],
+      "table_names_original": [ "hotels" ]
+   },
+   {
+      "column_names": [
+         [ -1, "*" ],
+         [ 0, "attraction_id" ],
+         [ 0, "name" ],
+         [ 0, "rating" ],
+         [ 0, "address" ],
+         [ 0, "opening_hours" ],
+         [ 0, "description" ],
+         [ 0, "nearby_attractions" ],
+         [ 0, "level" ]
+      ],
+      "column_names_original": [
+         [ -1, "*" ],
+         [ 0, "attraction_id" ],
+         [ 0, "name" ],
+         [ 0, "rating" ],
+         [ 0, "address" ],
+         [ 0, "opening_hours" ],
+         [ 0, "description" ],
+         [ 0, "nearby_attractions" ],
+         [ 0, "level" ]
+      ],
+      "column_types": [
+         "number",
+         "text",
+         "real",
+         "text",
+         "text",
+         "text",
+         "text",
+         "text"
+      ],
+      "db_id": "tourism_db",  
+      "foreign_keys": [],
+      "primary_keys": [ 1 ],
+      "table_names": [ "attractions" ],
+      "table_names_original": [ "attractions" ]
+   },
+   {
+      "column_names": [
+         [ -1, "*" ],
+         [ 0, "id" ],
+         [ 0, "attraction_id" ],
+         [ 0, "review_text" ],
+         [ 0, "rating" ],
+         [ 0, "date" ]
+      ],
+      "column_names_original": [
+         [ -1, "*" ],
+         [ 0, "id" ],
+         [ 0, "attraction_id" ],
+         [ 0, "review_text" ],
+         [ 0, "rating" ],
+         [ 0, "date" ]
+      ],
+      "column_types": [
+         "number",
+         "number",
+         "text",
+         "text",
+         "text"
+      ],
+      "db_id": "tourism_db",  
+      "foreign_keys": [
+         [2, 1]  
+      ],
+      "primary_keys": [ 1 ],
+      "table_names": [ "reviews" ],
+      "table_names_original": [ "reviews" ]
+   },
+   {
+      "column_names": [
+         [ -1, "*" ],
+         [ 0, "id" ],
+         [ 0, "attraction_id" ],
+         [ 0, "name" ],
+         [ 0, "score" ],
+         [ 0, "distance" ]
+      ],
+      "column_names_original": [
+         [ -1, "*" ],
+         [ 0, "id" ],
+         [ 0, "attraction_id" ],
+         [ 0, "name" ],
+         [ 0, "score" ],
+         [ 0, "distance" ]
+      ],
+      "column_types": [
+         "number",
+         "number",
+         "text",
+         "real",
+         "real"
+      ],
+      "db_id": "tourism_db",  
+      "foreign_keys": [
+         [2, 1]  
+      ],
+      "primary_keys": [ 1 ],
+      "table_names": [ "nearby_food" ],
+      "table_names_original": [ "nearby_food" ]
+   }
+]

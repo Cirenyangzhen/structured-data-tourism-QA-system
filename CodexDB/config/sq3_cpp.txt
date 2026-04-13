@@ -1,0 +1,59 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Attraction { string id, name; };
+struct Restaurant { string id, attr_id, name, score, distance; };
+
+int main() {
+    // 读取景点表
+    vector<Attraction> attractions;
+    ifstream attr_file("attractions.csv");
+    string line;
+    getline(attr_file, line);
+    while (getline(attr_file, line)) {
+        size_t id_end = line.find(',');
+        Attraction a;
+        a.id = line.substr(0, id_end);
+        a.name = line.substr(id_end + 1, line.find(',', id_end + 1) - id_end - 1);
+        if (a.name == "比日景区") {
+            attractions.push_back(a);
+            break;
+        }
+    }
+    
+    // 读取餐厅表
+    vector<Restaurant> restaurants;
+    ifstream food_file("nearby_food.csv");
+    getline(food_file, line);
+    while (getline(food_file, line)) {
+        Restaurant r;
+        size_t id_end = line.find(',');
+        r.id = line.substr(0, id_end);
+        size_t attr_id_end = line.find(',', id_end + 1);
+        r.attr_id = line.substr(id_end + 1, attr_id_end - id_end - 1);
+        size_t name_end = line.find(',', attr_id_end + 1);
+        r.name = line.substr(attr_id_end + 1, name_end - attr_id_end - 1);
+        size_t score_end = line.find(',', name_end + 1);
+        r.score = line.substr(name_end + 1, score_end - name_end - 1);
+        r.distance = line.substr(score_end + 1);
+        if (r.attr_id == attractions[0].id && stof(r.score) > 4.0) {
+            restaurants.push_back(r);
+        }
+    }
+    
+    // 按距离排序
+    sort(restaurants.begin(), restaurants.end(), [](const Restaurant& a, const Restaurant& b) {
+        return stof(a.distance) < stof(b.distance);
+    });
+    
+    // 写入结果
+    ofstream result("result.csv");
+    result << "Name,Score,Distance" << endl;
+    for (const auto& r : restaurants) {
+        result << r.name << "," << r.score << "," << r.distance << endl;
+    }
+    return 0;
+}

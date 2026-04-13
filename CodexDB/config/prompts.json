@@ -1,0 +1,168 @@
+{
+   "sample_databases": [
+     {
+       "column_names_original": [
+         [-1, "*"],
+         [0, "attraction_id"],
+         [0, "name"],
+         [0, "rating"],
+         [0, "address"],
+         [0, "opening_hours"],
+         [0, "description"],
+         [0, "nearby_attractions"],
+         [0, "level"],
+         [1, "id"],
+         [1, "attraction_id"],
+         [1, "review_text"],
+         [1, "rating"],
+         [1, "date"],
+         [2, "id"],
+         [2, "attraction_id"],
+         [2, "name"],
+         [2, "score"],
+         [2, "distance"],
+         [3, "hotel_id"],
+         [3, "name"],
+         [3, "rating"],
+         [3, "address"],
+         [3, "contact"]
+       ],
+       "column_types": [
+         "text",
+         "number", "text", "real", "text", "text", "text", "text", "text",
+         "number", "number", "text", "text", "text",
+         "number", "number", "text", "real", "real",
+         "number", "text", "real", "text", "text"
+       ],
+       "db_id": "tourism_db",
+       "foreign_keys": [
+         [10, 1],
+         [15, 1]   
+       ],
+       "primary_keys": [1, 9, 14, 19],
+       "table_names_original": ["attractions", "reviews", "nearby_food", "hotels"],
+       "files": [
+         "attractions.csv",
+         "reviews.csv",
+         "nearby_food.csv",
+         "hotels.csv"
+       ]
+     }
+   ],
+   "transform": {
+     "from_*": {
+       "to_python": {
+         "template": "\"\"\"\n根据以下表结构回答查询 \"<task>\"：\n- attractions表字段：attraction_id（景点ID）, name（名称）, address（地址）\n- reviews表字段：review_text（评论内容）, attraction_id（关联景点ID）, rating（评分）\n- nearby_food表字段：name（餐厅名）, score（评分）, distance（距离）, attraction_id（关联景点ID）\n- hotels表字段：name（酒店名）, address（地址）, rating（评分）\n\n生成代码时需注意：\n1. 所有景点默认属于林芝市，无需过滤地址\n2. 精确匹配景点名称（如'巴松措'需完全一致）\n3. 使用attraction_id关联表\n4. 结果保存到result.csv\n\"\"\"\n\n--- Start of Python program ---",
+         "marker": "--- End of Python program ---",
+         "linepre": ""
+       },
+       "to_bash": {
+         "template": "# This Bash script processes the tourism_db database.\n<database>\n<plan>\n\n--- Start of Bash script ---\n#!/bin/bash\necho \"Processing query: <task>\"",
+         "marker": "--- End of Bash script ---",
+         "linepre": "# "
+       },
+       "to_cpp": {
+         "template": "// This C++ program processes the tourism_db database.\n<database>\n<plan>\n\n--- Start of C++ program ---\n#include <iostream>\nusing namespace std;",
+         "marker": "--- End of C++ program ---",
+         "linepre": "// "
+       }
+     },
+     "tactics": [
+       "Import libraries<strategy>.",
+       "Load data for relevant tables.",
+       "Join tables using Attraction_ID.",
+       "Filter and sort data<strategy>.",
+       "Write results to result.csv."
+     ],
+     "precedence": [
+       {"F":0, "S":3},
+       {"F":1, "S":2},
+       {"F":2, "S":3},
+       {"F":3, "S":4}
+     ],
+     "strategies": ["", " for efficient joins", " for real-time processing"]
+   },
+   "index": {
+     "from_*": {
+       "to_python": {
+         "template": "\"\"\"\nThis Python program indexes the tourism_db database.\n<database>\n<plan>\"\"\"\n\n--- Start of Python program ---",
+         "marker": "--- End of Python program ---",
+         "linepre": ""
+       },
+       "to_bash": {
+         "template": "# This Bash script indexes the tourism_db database.\n<database>\n<plan>\n\n--- Start of Bash script ---\n#!/bin/bash\necho \"Indexing data...\"",
+         "marker": "--- End of Bash script ---",
+         "linepre": "# "
+       },
+       "to_cpp": {
+         "template": "// This C++ program indexes the tourism_db database.\n<database>\n<plan>\n\n--- Start of C++ program ---\n#include <iostream>\nusing namespace std;",
+         "marker": "--- End of C++ program ---",
+         "linepre": "// "
+       }
+     },
+     "tactics": [
+       "Iterate over attractions, reviews, nearby_food, and hotels.",
+       "Build indexes on Attraction_ID for fast joins.",
+       "Optimize storage layout<strategy>."
+     ],
+     "strategies": ["", " using hash tables", " using B-trees"]
+   },
+   "query": {
+     "from_nl": {
+       "sample_tasks": [
+         {
+           "task": "林芝有哪些景点？列出名称和地址",
+           "db_id": "tourism_db",
+           "sample_solution": "import pandas as pd\nattractions = pd.read_csv('attractions.csv')\nattractions[['name', 'address']].to_csv('result.csv', index=False)"
+         },
+         {
+           "task": "景点巴松措的前三条高评分评论是什么？",
+           "db_id": "tourism_db",
+           "sample_solution": "import pandas as pd\nattractions = pd.read_csv('attractions.csv')\nreviews = pd.read_csv('reviews.csv')\nmerged = pd.merge(attractions[attractions['name'] == '巴松措'], reviews, on='attraction_id')\nmerged.sort_values('rating', ascending=False).head(3)[['review_text', 'rating']].to_csv('result.csv', index=False)"
+         },
+         {
+           "task": "比日景区附近评分高于4.0的餐厅有哪些？按距离排序",
+           "db_id": "tourism_db",
+           "sample_solution": "import pandas as pd\nattractions = pd.read_csv('attractions.csv')\nnearby_food = pd.read_csv('nearby_food.csv')\nmerged = pd.merge(attractions[attractions['name'] == '比日景区'], nearby_food, on='attraction_id')\nmerged[merged['score'] > 4.0].sort_values('distance')[['name_y', 'score', 'distance']].to_csv('result.csv', index=False)"
+         }
+       ],
+       "to_python": {
+         "template": "\"\"\"\n根据以下表结构回答查询 \"<task>\"：\n- attractions表字段：attraction_id, name, address\n- reviews表字段：attraction_id, review_text, rating\n- nearby_food表字段：attraction_id, name, score, distance\n- hotels表字段：hotel_id, name, address, rating\n\n生成代码时需：\n1. 使用attraction_id关联表\n2. 精确匹配景点名称（如'巴松措'）\n3. 结果保存到result.csv\n\"\"\"\n\n--- Start of Python program ---",
+         "marker": "--- End of Python program ---",
+         "linepre": "",
+         "sample_solution_links": ["sq1_python.txt", "sq2_python.txt", "sq3_python.txt"]
+       },
+       "to_pg_sql": {
+         "template": "##### 根据以下表结构翻译SQL：\n# attractions(attraction_id, name, address)\n# reviews(attraction_id, review_text, rating)\n# nearby_food(attraction_id, name, score, distance)\n查询：<task>\n--- Start of SQL query ---\nSELECT ",
+         "marker": "--- End of SQL query ---",
+         "linepre": "# ",
+         "sample_solution_links": ["sq1_sql.txt", "sq2_sql.txt", "sq3_sql.txt"]
+       }
+     },
+     "from_pg_sql": {
+       "sample_tasks": [
+         {
+           "task": "SELECT name, address FROM attractions",
+           "db_id": "tourism_db",
+           "sample_solution": "import pandas as pd\npd.read_csv('attractions.csv')[['name', 'address']].to_csv('result.csv', index=False)"
+         },
+         {
+           "task": "SELECT review_text, rating FROM reviews WHERE attraction_id = 'A001' ORDER BY rating DESC LIMIT 3",
+           "db_id": "tourism_db",
+           "sample_solution": "import pandas as pd\nreviews = pd.read_csv('reviews.csv')\nreviews[reviews['attraction_id'] == 'A001'].sort_values('rating', ascending=False).head(3)[['review_text', 'rating']].to_csv('result.csv', index=False)"
+         },
+         {
+           "task": "SELECT n.name, n.score FROM nearby_food n JOIN attractions a ON n.attraction_id = a.attraction_id WHERE a.name = '比日景区' AND n.score > 4.0",
+           "db_id": "tourism_db",
+           "sample_solution": "import pandas as pd\nattractions = pd.read_csv('attractions.csv')\nnearby_food = pd.read_csv('nearby_food.csv')\nmerged = pd.merge(attractions[attractions['name'] == '比日景区'], nearby_food, on='attraction_id')\nmerged[merged['Score'] > 4.0][['name_y', 'score']].to_csv('result.csv', index=False)"
+         }
+       ],
+       "to_python": {
+         "template": "\"\"\"\nThis Python program answers the SQL query \"<task>\" on tourism_db.\n<database>\n<plan>\n\"\"\"\n\n--- Start of Python program ---",
+         "marker": "--- End of Python program ---",
+         "linepre": "",
+         "sample_solution_links": ["sq1_python.txt", "sq2_python.txt", "sq3_python.txt"]
+       }
+     }
+   }
+ }

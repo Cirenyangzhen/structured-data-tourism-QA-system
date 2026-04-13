@@ -1,0 +1,5 @@
+#!/bin/bash
+# 提取名称和地址，跳过标题
+tail -n +2 attractions.csv | cut -d',' -f2,4 > result.csv
+# 添加标题
+sed -i '1i name,address' result.csv

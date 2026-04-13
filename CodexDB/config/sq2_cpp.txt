@@ -1,0 +1,57 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+struct Attraction { string id, name; };
+struct Review { string id, attr_id, text, rating; };
+
+int main() {
+    // 读取景点表
+    vector<Attraction> attractions;
+    ifstream attr_file("attractions.csv");
+    string line;
+    getline(attr_file, line);
+    while (getline(attr_file, line)) {
+        size_t id_end = line.find(',');
+        Attraction a;
+        a.id = line.substr(0, id_end);
+        a.name = line.substr(id_end + 1, line.find(',', id_end + 1) - id_end - 1);
+        if (a.name == "巴松措") {
+            attractions.push_back(a);
+            break;  // 找到后直接退出循环
+        }
+    }
+    
+    // 读取评论表
+    vector<Review> reviews;
+    ifstream rev_file("reviews.csv");
+    getline(rev_file, line);
+    while (getline(rev_file, line)) {
+        Review r;
+        size_t id_end = line.find(',');
+        r.id = line.substr(0, id_end);
+        size_t attr_id_end = line.find(',', id_end + 1);
+        r.attr_id = line.substr(id_end + 1, attr_id_end - id_end - 1);
+        size_t text_end = line.find(',', attr_id_end + 1);
+        r.text = line.substr(attr_id_end + 1, text_end - attr_id_end - 1);
+        r.rating = line.substr(text_end + 1, line.find(',', text_end + 1) - text_end - 1);
+        if (r.attr_id == attractions[0].id) {
+            reviews.push_back(r);
+        }
+    }
+    
+    // 按评分降序排序
+    sort(reviews.begin(), reviews.end(), [](const Review& a, const Review& b) {
+        return stof(a.rating) > stof(b.rating);
+    });
+    
+    // 写入结果
+    ofstream result("result.csv");
+    result << "Review_Text,Rating" << endl;
+    for (int i=0; i<min(3, (int)reviews.size()); i++) {
+        result << reviews[i].text << "," << reviews[i].rating << endl;
+    }
+    return 0;
+}

@@ -1,0 +1,18 @@
+import pandas as pd
+
+# 读取景点表和餐厅表
+attractions = pd.read_csv("attractions.csv")
+nearby_food = pd.read_csv("nearby_food.csv")
+
+# 过滤比日景区景点并关联餐厅
+biri_scenic = attractions[attractions["name"] == "比日景区"]
+merged = pd.merge(biri_scenic, nearby_food, on="attraction_id")
+
+# 过滤评分>4.0的餐厅，按距离升序排序
+filtered = merged[merged["score"] > 4.0].sort_values("distance")
+
+# 提取餐厅名、评分和距离，保存结果
+filtered[["name_y", "score", "distance"]].to_csv("result.csv", index=False)
+
+# 显示结果
+print(filtered[["name_y", "score", "distance"]])

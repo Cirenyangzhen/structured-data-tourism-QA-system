@@ -1,0 +1,33 @@
+{
+  "tourism": {
+    "column_names": [
+      [-1, "*"],
+      [0, "attraction_id"], [0, "name"], [0, "rating"], [0, "address"], [0, "opening_hours"], [0, "description"], [0, "nearby_attractions"], [0, "level"],
+      [1, "id"], [1, "attraction_id"], [1, "review_text"], [1, "rating"], [1, "date"],
+      [2, "id"], [2, "attraction_id"], [2, "name"], [2, "score"], [2, "distance"],
+      [3, "hotel_id"], [3, "name"], [3, "rating"], [3, "address"], [3, "contact"]
+    ],
+    "column_names_original": [
+      [-1, "*"],
+      [0, "attraction_id"], [0, "name"], [0, "rating"], [0, "address"], [0, "opening_hours"], [0, "description"], [0, "nearby_attractions"], [0, "level"],
+      [1, "id"], [1, "attraction_id"], [1, "review_text"], [1, "rating"], [1, "date"],
+      [2, "id"], [2, "attraction_id"], [2, "name"], [2, "score"], [2, "distance"],
+      [3, "hotel_id"], [3, "name"], [3, "rating"], [3, "address"], [3, "contact"]
+    ],
+    "column_types": [
+      "text",
+      "number", "text", "real", "text", "text", "text", "text", "text",
+      "number", "number", "text", "text", "text",
+      "number", "number", "text", "real", "real",
+      "number", "text", "real", "text", "text"
+    ],
+    "db_id": "tourism_db", 
+    "foreign_keys": [
+      [10, 1],  
+      [15, 1]   
+    ],
+    "primary_keys": [1, 9, 14, 19],
+    "table_names": ["attractions", "reviews", "nearby_food", "hotels"],
+    "table_names_original": ["attractions", "reviews", "nearby_food", "hotels"]
+  }
+}
