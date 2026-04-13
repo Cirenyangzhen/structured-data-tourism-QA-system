@@ -51,6 +51,7 @@ The system consists of four main components:
 
    * Built with Streamlit
    * Users input questions and receive real-time results
+<img width="1024" height="1536" alt="86b374ff-555a-4852-903e-6ab780f9dedf" src="https://github.com/user-attachments/assets/11d519b8-d237-433b-96a0-cb84ac4effae" />
 
 ---
 
