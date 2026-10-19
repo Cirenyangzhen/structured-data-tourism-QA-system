@@ -1,3 +1,4 @@
+import os
 # Scrapy settings for tourism_scraper project
 #
 # For simplicity, this file contains only settings considered important or
@@ -105,4 +106,4 @@ ROBOTSTXT_OBEY = False  # 反爬虫设置，禁用 robots.txt
 MYSQL_HOST = 'localhost'  # 数据库地址
 MYSQL_DATABASE = 'tourism_db'  # 数据库名称
 MYSQL_USER = 'root'  # 数据库用户名
-MYSQL_PASSWORD = '123456'  # 数据库密码
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')  # 数据库密码
