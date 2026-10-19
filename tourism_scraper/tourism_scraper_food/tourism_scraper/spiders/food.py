@@ -1,3 +1,4 @@
+import os
 import scrapy
 from decimal import Decimal
 import re
@@ -96,10 +97,10 @@ class FoodSpider(scrapy.Spider):
     def save_to_mysql(self, item):
         try:
             conn = mysql.connector.connect(
-                host='localhost',
-                database='tourism_db',
-                user='root',
-                password='123456'
+                host=os.environ.get('MYSQL_HOST', 'localhost'),
+                database=os.environ.get('MYSQL_DATABASE', 'tourism_db'),
+                user=os.environ.get('MYSQL_USER', 'root'),
+                password=os.environ.get('MYSQL_PASSWORD')
             )
             cursor = conn.cursor()
             insert_query = """
