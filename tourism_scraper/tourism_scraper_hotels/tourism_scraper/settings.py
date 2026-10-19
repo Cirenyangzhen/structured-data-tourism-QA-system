@@ -1,3 +1,4 @@
+import os
 # Scrapy settings for tourism_scraper project
 #
 # For simplicity, this file contains only settings considered important or
@@ -98,7 +99,7 @@ USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 MYSQL_HOST = 'localhost'  # 数据库地址
 MYSQL_DATABASE = 'tourism_db'  # 数据库名称
 MYSQL_USER = 'root'  # 数据库用户名
-MYSQL_PASSWORD = '123456'  # 数据库密码
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')  # 数据库密码
 ITEM_PIPELINES = {
     'tourism_scraper.pipelines.MySQLPipeline': 1,  # 使用 MySQL pipeline
 }
