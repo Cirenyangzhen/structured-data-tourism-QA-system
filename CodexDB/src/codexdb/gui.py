@@ -25,12 +25,11 @@ import codexdb.engine
 import codexdb.solve
 
 parser = argparse.ArgumentParser()
-parser.add_argument('ai_key', type=str, help='Access key for OpenAI platform')
 parser.add_argument('data_dir', type=str, help='Path to data directory')
 args = parser.parse_args()
 
-openai.api_key = args.ai_key
-openai.api_base = 'https://api.chatanywhere.tech/v1' 
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+openai.api_base = os.environ.get('OPENAI_BASE_URL', 'https://api.openai.com/v1')
 catalog = codexdb.catalog.DbCatalog(args.data_dir)
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -41,7 +40,9 @@ st.set_page_config(
 )
 
 
-st.image(r'C:\Users\DZ\Desktop\top.jpg', width=900)
+header_image = pathlib.Path(__file__).resolve().parents[3] / 'screenshots' / 'home_page.bmp'
+if header_image.is_file():
+    st.image(str(header_image), width=900)
 
 st.markdown('''
 #                                  林芝市智慧旅游问答系统
@@ -130,6 +131,9 @@ engine = codexdb.engine.PythonEngine(
 
 
 if st.button('发送问题'):
+    if not openai.api_key:
+        st.error('OPENAI_API_KEY is not set. Set it in the environment before running queries.')
+        st.stop()
     
     if condition > 1:
         sqlite_path = f'{args.data_dir}/database/{db_id}/{db_id}.sqlite'
@@ -157,9 +161,8 @@ if st.button('发送问题'):
 
         if condition > 0:
             executed, codb_result, elapsed_s = engine.execute(db_id, code, 30)
-            result_file_path = r"C:\Users\DZ\Desktop\CodexDB\tmp\result.csv"  # 根据实际存储路径调整
-            if os.path.exists(result_file_path):
-                result_df = pd.read_csv(result_file_path)
+            if executed:
+                result_df = codb_result
                 st.write("林芝智慧旅游系统回复:")
                 st.dataframe(result_df)  # 显示 result.csv 文件中的内容
             else:
