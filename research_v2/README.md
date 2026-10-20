@@ -1,40 +1,50 @@
-# Research V2 · SQL-only baseline (Phase 1)
+# Research V2 — Hybrid Text-to-SQL project
 
-**State:** initial offline implementation, **not yet run/validated on the real tourism DB**, and **not a tested LLM pipeline**.
+## Current implementation: Phase 1 SQL-only baseline
 
-## Research question
-Can a carefully controlled LLM-to-SQL pipeline answer Chinese tourism questions correctly and reliably before adding Python fallback?
+The goal is a robust **Text-to-SQL first** architecture based on existing CodexDB components. Do not confuse this stage with the final Hybrid system.
 
-## Pipeline
-1. Natural-language question → schema-aware prompt (model adapter: **pending**).
-2. LLM SQL response (model adapter: **pending**).
-3. SQL AST validation (`sql_baseline.validate_sql`).
-4. Read-only SQLite execution (`sql_baseline.run_read_only`).
-5. Return bounded tabular results, and record execution status.
-6. Evaluate on an independently reviewed, frozen gold question set (**pending**).
+### Components actually wired together
 
-## Run offline tests
-From repository root, install the repository's pinned `sqlglot` dependency in a disposable environment, then:
+- **CodexDB `DbCatalog.sqlite_schema`**: introspects the real read-only SQLite database, avoiding stale `schemata.json` entries.
+- **CodexDB `SqlGenerator`**: generates SQLite SQL from Chinese natural language using the configured LLM, with `basic`, `schema`, and explicit `fewshot` styles.
+- **CodexDB `SqliteEngine`**: keeps its `execute(db_id, sql, timeout_s)` interface, while executing against the existing SQLite file in read-only mode using `codexdb.sql_execution`.
+- **`codexdb.v2_sql_pipeline.run_sql_only`**: links these components and returns structured metadata.
+- **`codexdb/gui_v2.py`**: new Streamlit entry point. The original `gui.py` is retained unchanged as legacy evidence.
+- **`tests/test_codexdb_v2.py`**: offline mocked-model integration tests.
 
-```bash
-python -m unittest discover -s tests -p "test_sql_baseline.py" -v
+The previous independent `research_v2/sql_baseline.py` is kept as a reference implementation; the new application uses **CodexDB's own `SqliteEngine`**, not that independent module.
+
+### Start on Windows (PowerShell)
+
+```powershell
+git switch research-v2-rebuild-20261019
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r CodexDB/requirements.txt
+python -m unittest discover -s tests -p "test_codexdb_v2.py" -v
+streamlit run CodexDB/src/codexdb/gui_v2.py
 ```
 
-Tests use a temporary tiny SQLite database and **no API credentials, no network, and no LLM calls**. They are not accuracy measurements. Do not execute existing CodexDB's LLM-generated Python on your host machine.
+Configure `OPENAI_API_KEY` securely as an environment variable before launching the Streamlit app; do not put API keys in command-line arguments, committed files, screenshots, or chat messages. The app **does not automatically read a `.env` file**. A model call may incur API costs and needs a model your account can access.
 
-## Important caveats
-- The legacy CodexDB `SqliteEngine` reconstructs an SQLite DB from CSV on execution; the V2 executor instead opens a fixed SQLite DB read-only. This is an intentional separate component.
-- This read-only executor uses SQL parsing, SQLite read-only URI mode, query-only mode, an authorizer and execution limits as defense in depth. Security review and isolated runtime tests are still required before accepting arbitrary untrusted SQL from public users.
-- The AST validator admits only single SELECT/UNION query roots; additional legitimate SQL syntax may need safe support added following tests.
-- The original bachelor's thesis' reported 82% (246/300) is historical **thesis-reported** evidence, not a result of this branch.
-- The 100-query historical prompt-comparison results are also not reproduced here.
-- Before any new experiment: version the database, define evaluation questions, confirm ground-truth answers, prevent few-shot/test leakage, freeze metrics and prompts.
+### Validation boundaries
 
-## Roadmap
-1. Audit the real `CodexDB/tourism/database/tourism/tourism.sqlite` schema against CSV files, `schema.sql` and `schemata.json`.
-2. Run the tests in a clean environment and fix any issues.
-3. Implement a model adapter and verifiable Basic/Schema-aware/Few-shot prompt builders.
-4. Create a CSV/JSONL per-question evaluation harness with correct SQL/results and full experimental metadata.
-5. Freeze the SQL-only baseline. Only then implement an isolated Question-to-Python comparator and adaptive Hybrid routing.
+- The integration tests use a temporary SQLite database and a **mocked LLM**. They do not measure actual Text-to-SQL accuracy, API latency, or cost.
+- The real tourism database `CodexDB/tourism/database/tourism/tourism.sqlite` is required for the app. V2 reads its actual schema; it does **not** rebuild the DB on every query.
+- Only read-only SELECT/UNION SQL is permitted; the executor also uses SQLite `mode=ro`, `query_only`, authorizer, opcode and row limits.
+- These are defense-in-depth controls, **not** a complete public-facing sandbox or formal SQL safety proof.
+- The sample Few-shot pairs in `CodexDB/tourism/fewshot_examples.json` are illustrative development examples, not evaluated gold-standard examples. Exclude overlaps with any test set.
+- These changes have been **committed but not yet confirmed by executing the integration tests against the repository in the target environment**. Do not report an accuracy number until it is actually measured.
+- The bachelor's thesis historical 82% (246/300) result is a **thesis-reported figure**, not a verified result from V2.
 
-No old records, data, or original thesis were overwritten.
+### Next phases (not implemented yet)
+
+2. Independent Question-to-Python using the existing CodexDB `PythonGenerator`. **Never run LLM-generated Python on the host**; require isolated restricted execution first.
+3. Paired SQL-only and Python-only experiments on a frozen gold question set.
+4. LLM-based SQL Critic; evaluate TP/FP/FN/TN, Precision/Recall/F1 **separately** from final answer correctness.
+5. Adaptive Hybrid decision/routing, SQL repair, safe Python fallback, and reporting of accuracy, costs and latency.
+
+### Project hygiene
+
+Development branch: `research-v2-rebuild-20261019`. Do not merge with `main` or the separate local `fix/security-credentials` branch until the security audit and comparison are complete. No edits to original thesis, experiments, or existing datasets are intended.
