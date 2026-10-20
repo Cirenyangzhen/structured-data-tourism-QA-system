@@ -35,9 +35,9 @@ def validate_sql(sql: str) -> str:
     if len(parsed) != 1 or not isinstance(parsed[0], (exp.Select, exp.Union)):
         raise SQLValidationError("Only one SELECT statement is permitted")
     # Enforce no DML, DDL, transaction, command, or side effect inside subqueries.
-    blocked = (exp.Insert, exp.Update, exp.Delete, exp.Drop, exp.Create,
-               exp.Alter, exp.Command)
-    if any(isinstance(node, blocked) for node in parsed[0].walk()):
+    blocked_names = {'Insert', 'Update', 'Delete', 'Drop', 'Create',
+                     'Alter', 'Command', 'Merge', 'Transaction', 'Set', 'Pragma'}
+    if any(type(node).__name__ in blocked_names for node in parsed[0].walk()):
         raise SQLValidationError("SQL contains a forbidden operation")
     return sql.strip()
 
