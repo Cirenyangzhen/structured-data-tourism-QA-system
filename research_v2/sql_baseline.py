@@ -32,7 +32,14 @@ def validate_sql(sql: str) -> str:
         parsed = sqlglot.parse(sql, read="sqlite")
     except Exception as exc:
         raise SQLValidationError("SQL could not be parsed") from exc
-    if len(parsed) != 1 or not isinstance(parsed[0], (exp.Select, exp.Union)):
+    if len(parsed) != 1 or parsed[0] is None:
+        raise SQLValidationError("Exactly one SQL statement is required")
+    root = parsed[0]
+    allowed_root = isinstance(root, (exp.Select, exp.Union)) or (
+        type(root).__name__ == "With"
+        and sql.lstrip().upper().startswith("WITH ")
+    )
+    if not allowed_root:
         raise SQLValidationError("Only one SELECT statement is permitted")
     # Enforce no DML, DDL, transaction, command, or side effect inside subqueries.
     blocked_names = {'Insert', 'Update', 'Delete', 'Drop', 'Create',
