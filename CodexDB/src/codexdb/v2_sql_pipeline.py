@@ -10,6 +10,22 @@ from codexdb.code import SqlGenerator
 from codexdb.engine import SqliteEngine
 
 
+
+class _LiveSchemaCatalog:
+    """CodexDB catalog facade exposing SQLite's real tables to SqlGenerator."""
+    def __init__(self, catalog):
+        self._catalog = catalog
+
+    def schema(self, db_id):
+        if hasattr(self._catalog, 'sqlite_schema'):
+            return self._catalog.sqlite_schema(db_id)
+        # Allows minimal in-memory test catalogs that implement schema().
+        return self._catalog.schema(db_id)
+
+    def __getattr__(self, attribute):
+        return getattr(self._catalog, attribute)
+
+
 def run_sql_only(catalog, db_id, question, *, model_id, prompt_style='schema',
                  examples=None, nr_samples=0, temperature=0.0,
                  max_rows=200, timeout_s=10):
@@ -23,8 +39,9 @@ def run_sql_only(catalog, db_id, question, *, model_id, prompt_style='schema',
     if db_id not in catalog.db_ids():
         raise ValueError('Unknown database id: ' + str(db_id))
 
+    schema_catalog = _LiveSchemaCatalog(catalog)
     generator = SqlGenerator(
-        catalog, list(examples or []), nr_samples, prompt_style, model_id
+        schema_catalog, list(examples or []), nr_samples, prompt_style, model_id
     )
     engine = SqliteEngine(catalog, max_rows=max_rows)
     test_case = {'question': question.strip(), 'query': '', 'db_id': db_id}
