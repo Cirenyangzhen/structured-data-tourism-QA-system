@@ -12,7 +12,7 @@ import time
 
 import pandas as pd
 import sqlglot
-from sqlglot import exp
+import sqlglot.expressions as exp
 
 
 class SQLValidationError(ValueError):
