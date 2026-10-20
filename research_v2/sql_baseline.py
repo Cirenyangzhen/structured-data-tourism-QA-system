@@ -36,8 +36,7 @@ def validate_sql(sql: str) -> str:
         raise SQLValidationError("Exactly one SQL statement is required")
     root = parsed[0]
     allowed_root = isinstance(root, (exp.Select, exp.Union)) or (
-        type(root).__name__ == "With"
-        and sql.lstrip().upper().startswith("WITH ")
+        sql.lstrip().upper().startswith("WITH ")
     )
     if not allowed_root:
         raise SQLValidationError("Only one SELECT statement is permitted")
