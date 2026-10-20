@@ -30,7 +30,14 @@ def validate_sql(sql):
         statements = sqlglot.parse(sql, read="sqlite")
     except Exception as exc:
         raise SQLValidationError("Cannot parse SQLite query") from exc
-    if len(statements) != 1 or not isinstance(statements[0], (exp.Select, exp.Union)):
+    if len(statements) != 1 or statements[0] is None:
+        raise SQLValidationError("Exactly one SQL statement is required")
+    statement_root = statements[0]
+    allowed_root = isinstance(statement_root, (exp.Select, exp.Union)) or (
+        type(statement_root).__name__ == "With"
+        and sql.lstrip().upper().startswith("WITH ")
+    )
+    if not allowed_root:
         raise SQLValidationError("Only a single read-only SELECT is supported")
     # The AST test is not the sole safety boundary; SQLite's authorizer is
     # additionally enabled below to deny every non-read operation.
