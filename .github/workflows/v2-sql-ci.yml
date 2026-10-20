@@ -1,0 +1,27 @@
+name: V2 SQL baseline offline checks
+on:
+  push:
+    branches:
+      - research-v2-rebuild-20261019
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sql-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy<2" "pandas==2.2.0" "sqlglot==1.16.1" "openai==0.28.1"
+      - name: Run mocked-LLM CodexDB integration tests
+        run: python -m unittest discover -s tests -p "test_codexdb_v2.py" -v
+      - name: Run independent SQL baseline reference tests
+        run: python -m unittest discover -s tests -p "test_sql_baseline.py" -v
