@@ -78,7 +78,7 @@ class V2IntegrationTests(unittest.TestCase):
     def test_parse_sql_fence(self):
         g = SqlGenerator(self.catalog, [], 0, 'schema', 'test-model')
         code = g._extract_code({
-            'choices': [{'message': {'content': '```sql\\nSELECT name FROM attractions;\\n```'}}]
+            'choices': [{'message': {'content': '```sql\nSELECT name FROM attractions;\n```'}}]
         })
         self.assertEqual(code, 'SELECT name FROM attractions;')
 
