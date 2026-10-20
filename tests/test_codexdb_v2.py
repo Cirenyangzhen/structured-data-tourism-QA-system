@@ -33,7 +33,7 @@ class TinyCatalog:
         return ['attractions.csv']
 
     def db_dir(self, db_id):
-        return str(self.root / db_id)
+        return str(self.root / 'database' / db_id)
 
     def db_ids(self):
         return ['tourism']
@@ -45,7 +45,7 @@ class V2IntegrationTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.catalog = TinyCatalog(self.temp.name)
         root = Path(self.catalog.db_dir('tourism'))
-        root.mkdir()
+        root.mkdir(parents=True)
         self.db_path = root / 'tourism.sqlite'
         with sqlite3.connect(self.db_path) as connection:
             connection.executescript(
