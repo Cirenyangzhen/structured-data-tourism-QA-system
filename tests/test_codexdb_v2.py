@@ -1,5 +1,6 @@
 """Offline V2 regression tests; no network and no LLM credentials required."""
 import sqlite3
+import json
 import sys
 import tempfile
 import unittest
@@ -9,6 +10,7 @@ from unittest.mock import patch
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / 'CodexDB' / 'src'))
 
+from codexdb.catalog import DbCatalog
 from codexdb.code import SqlGenerator
 from codexdb.engine import SqliteEngine
 from codexdb.v2_sql_pipeline import run_sql_only
@@ -52,6 +54,19 @@ class V2IntegrationTests(unittest.TestCase):
                 "INSERT INTO attractions VALUES ('大峡谷', 4.7);"
                 "INSERT INTO attractions VALUES ('山峰', 4.5);"
             )
+
+    def test_catalog_reads_live_sqlite_not_stale_json(self):
+        old_schema = dict(self.catalog.schema_def)
+        old_schema['column_names_original'] = [[-1, '*'], [0, 'nonexistent']]
+        (Path(self.temp.name) / 'schemata.json').write_text(
+            json.dumps({'tourism': old_schema}), encoding='utf-8'
+        )
+        real_catalog = DbCatalog(self.temp.name)
+        live = real_catalog.sqlite_schema('tourism')
+        colnames = [c[1] for c in live['column_names_original']]
+        self.assertIn('rating', colnames)
+        self.assertNotIn('nonexistent', colnames)
+        self.assertEqual(live['table_names_original'], ['attractions'])
 
     def test_sql_generator_is_sqlite_not_python(self):
         g = SqlGenerator(self.catalog, [], 0, 'schema', 'test-model')
