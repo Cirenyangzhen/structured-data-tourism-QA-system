@@ -58,8 +58,8 @@ with st.sidebar:
         count = st.slider('Few-shot 示例数量', 1, len(examples), min(2, len(examples)))
         st.caption('示例仅作开发种子；正式评测须检查样本是否与测试集重叠。')
 
-schema = catalog.schema(db_id)
-with st.expander('当前 Schema（由 CodexDB DbCatalog 读取）'):
+schema = catalog.sqlite_schema(db_id)
+with st.expander('当前 Schema（CodexDB DbCatalog 从真实 SQLite 读取）'):
     for i, table in enumerate(schema['table_names_original']):
         columns = [col[1] for col in schema['column_names_original'] if col[0] == i]
         st.code(f'{table}({", ".join(columns)})')
