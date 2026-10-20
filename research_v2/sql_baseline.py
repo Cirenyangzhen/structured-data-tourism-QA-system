@@ -14,7 +14,7 @@ import sqlite3
 from urllib.parse import quote
 
 import sqlglot
-from sqlglot import exp
+import sqlglot.expressions as exp
 
 
 class SQLValidationError(ValueError):
