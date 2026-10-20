@@ -68,6 +68,20 @@ class V2IntegrationTests(unittest.TestCase):
         self.assertNotIn('nonexistent', colnames)
         self.assertEqual(live['table_names_original'], ['attractions'])
 
+    def test_repository_tourism_sqlite_is_readable(self):
+        """Smoke test actual checked-in tourism data, not a synthetic DB."""
+        data_dir = REPO / 'CodexDB' / 'tourism'
+        catalog = DbCatalog(str(data_dir))
+        schema = catalog.sqlite_schema('tourism')
+        self.assertIn('attractions', schema['table_names_original'])
+        engine = SqliteEngine(catalog)
+        ok, df, stats = engine.execute(
+            'tourism', 'SELECT COUNT(*) AS n FROM attractions', 10
+        )
+        self.assertTrue(ok, stats)
+        self.assertEqual(len(df), 1)
+        self.assertGreaterEqual(int(df.iloc[0]['n']), 0)
+
     def test_sql_generator_is_sqlite_not_python(self):
         g = SqlGenerator(self.catalog, [], 0, 'schema', 'test-model')
         p = g.get_prompt(self.catalog.schema('tourism'), '', [], '评分最高的景点', '')
