@@ -122,6 +122,16 @@ class V2IntegrationTests(unittest.TestCase):
         self.assertFalse(ok)
         self.assertEqual(stats['error_type'], 'SQLValidationError')
 
+    def test_engine_supports_read_only_cte(self):
+        engine = SqliteEngine(self.catalog)
+        sql = (
+            'WITH top AS (SELECT name FROM attractions WHERE rating > 4.5) '
+            'SELECT COUNT(*) AS n FROM top'
+        )
+        ok, df, stats = engine.execute('tourism', sql, 5)
+        self.assertTrue(ok, stats)
+        self.assertEqual(df['n'].tolist(), [2])
+
     def test_engine_limits_result_rows(self):
         engine = SqliteEngine(self.catalog, max_rows=2)
         ok, df, stats = engine.execute('tourism', 'SELECT name FROM attractions', 5)
