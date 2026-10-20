@@ -1,0 +1,14 @@
+[
+  {
+    "question": "列出所有景点的名称。",
+    "query": "SELECT name FROM attractions;"
+  },
+  {
+    "question": "列出评分严格高于4.5分的景点名称和评分。",
+    "query": "SELECT name, rating FROM attractions WHERE rating > 4.5;"
+  },
+  {
+    "question": "列出评分最高的五家酒店及其评分。",
+    "query": "SELECT name, rating FROM hotels ORDER BY rating DESC LIMIT 5;"
+  }
+]
