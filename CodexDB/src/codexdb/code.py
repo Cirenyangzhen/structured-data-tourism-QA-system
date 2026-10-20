@@ -32,6 +32,7 @@ class CodeGenerator(abc.ABC):
         self.ai_kwargs = {'model':model_id}
         self.code_prefix = ''
         self.code_suffix = ''
+        self.system_prompt = 'You write Python code, implementing Python comments.'
     
     def generate(self, test_case, temperature):
         
@@ -68,7 +69,7 @@ class CodeGenerator(abc.ABC):
                 response = openai.ChatCompletion.create(
                     messages=[
                         {'role':'system', 
-                         'content':'You write Python code, implementing Python comments.'},
+                         'content':self.system_prompt},
                         {'role':'user', 'content':prompt}],
                     temperature=temperature,
                     **self.ai_kwargs)
@@ -316,52 +317,75 @@ class PythonGenerator(CodeGenerator):
 
 
 class SqlGenerator(CodeGenerator):
-    """ Translates natural language questions into SQL queries. """
-    
-    def __init__(self, *kwargs):
-        """ Initializes for SQL query generation.
-        
-        Args:
-            kwargs: arguments for super class constructor
-        """
-        super().__init__(*kwargs)
-        self.ai_kwargs['max_tokens'] = 150
-        self.ai_kwargs['stop'] = ['#', ';']
-        self.code_prefix = 'SELECT '
-    
-    def get_prompt(self, schema, db_dir, files, question, query):
-        """ Returns prompt for given question. """
-        lines = []
-        lines.append('### Postgres SQL tables, with their properties:')
-        lines.append('#')
-        
-        tables = schema['table_names_original']
-        all_columns = schema['column_names_original']
-        for idx, table in enumerate(tables):
-            cols = [c[1].replace(' ', '_') for c in all_columns if c[0] == idx]
-            lines.append(f'# {table}({",".join(cols)})')
-            if self.prompt_style == 'data':
-                #lines.append(f'Sample rows from {table}:')
-                file_name = files[idx]
-                sample = self._db_sample(db_dir, file_name, 5)
-                lines += ['# ' + s for s in sample]
+    """Translate natural-language questions into SQLite SQL (Research V2).
 
-        lines.append('#')
-        lines.append(f'### Query: "{question}"')
-        lines.append('SELECT')
+    Preserves the CodexDB Generator interface while fixing the old
+    PostgreSQL-style prompting, misleading Python system message,
+    and silent/invalid few-shot configuration.
+    """
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.ai_kwargs['max_tokens'] = 512
+        self.system_prompt = (
+            'Translate the question into one read-only SQLite SELECT query '
+            '(a WITH ... SELECT is allowed). Return SQL only, without Markdown '
+            'or explanations. Use only known tables and columns.'
+        )
+
+    def get_prompt(self, schema, db_dir, files, question, query):
+        if not question or not question.strip():
+            raise ValueError('SqlGenerator requires a nonempty natural-language question')
+        if self.prompt_style not in ('basic', 'schema', 'fewshot', 'data'):
+            raise ValueError('Unsupported SQL prompt_style: ' + str(self.prompt_style))
+        lines = [
+            'Generate one read-only SQLite SQL query for the user question.',
+            'Output only SQL; do not generate Python.',
+        ]
+        if self.prompt_style != 'basic':
+            lines.append('SQLite schema:')
+            tables = schema['table_names_original']
+            all_columns = schema['column_names_original']
+            for idx, table in enumerate(tables):
+                cols = [col[1] for col in all_columns if col[0] == idx]
+                lines.append(f'- {table}({", ".join(cols)})')
+                if self.prompt_style == 'data':
+                    for item in self._db_sample(db_dir, files[idx], 3):
+                        lines.append('  sample: ' + item)
+            for src, dst in schema.get('foreign_keys', []):
+                try:
+                    si, sc = all_columns[src]
+                    di, dc = all_columns[dst]
+                    lines.append(
+                        f'- foreign key: {tables[si]}.{sc} '
+                        f'-> {tables[di]}.{dc}'
+                    )
+                except (IndexError, KeyError, TypeError):
+                    pass
+        lines.extend(['Question: ' + question.strip(), 'SQLite SQL:'])
         return '\n'.join(lines)
-    
+
     def _sample_prompts(self):
-        """ Returns prefix with samples for few-shot learning. """
-        parts = []
-        selected = random.sample(self.examples, k=self.nr_samples)
-        for example in selected:
-            db_id = example['schema']['db_id']
-            db_dir = self.catalog.db_dir(db_id)
-            prompt = self.get_prompt(
-                example['schema'], db_dir, example['files'], 
-                example['question'], example['query'])
-            parts.append(prompt + example['query'][6:])
-            parts.append('')
-            parts.append('')
+        if self.prompt_style != 'fewshot':
+            return ''
+        if self.nr_samples < 1:
+            raise ValueError('Few-shot mode requires at least one example')
+        if len(self.examples) < self.nr_samples:
+            raise ValueError(
+                f'Requested {self.nr_samples} examples; only '
+                f'{len(self.examples)} provided'
+            )
+        parts = ['Few-shot examples (SQLite):']
+        for example in self.examples[:self.nr_samples]:
+            question, sql = example['question'].strip(), example['query'].strip()
+            if not question or not sql:
+                raise ValueError('Few-shot examples must include question and query')
+            parts.extend(['Question: ' + question, 'SQLite SQL:', sql, ''])
         return '\n'.join(parts)
+
+    def _extract_code(self, response):
+        sql = response['choices'][0]['message']['content'].strip()
+        match = re.fullmatch(
+            r'```(?:sql|sqlite)?\s*(.*?)\s*```',
+            sql, flags=re.IGNORECASE | re.DOTALL
+        )
+        return match.group(1).strip() if match else sql
