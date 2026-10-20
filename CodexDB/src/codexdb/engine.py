@@ -168,50 +168,45 @@ class PythonEngine(ExecutionEngine):
 
 
 class SqliteEngine(ExecutionEngine):
-    """ SQL execution engine using SQLite. """
-    
-    def __init__(self, catalog):
-        
-        super().__init__(catalog)
-    
+    """CodexDB-compatible V2 SQLite execution engine.
+
+    Unlike the original CSV-to-db-on-every-query implementation, this engine
+    executes read-only SQL against a pinned, existing SQLite database.
+    It retains the execute(db_id, sql, timeout_s) result contract.
+    """
+
+    def __init__(self, catalog, *, max_rows=200, max_opcodes=1000000,
+                 db_path=None):
+        self.catalog = catalog
+        self.max_rows = max_rows
+        self.max_opcodes = max_opcodes
+        self.override_db_path = db_path
+        temp_dir = os.environ.get('CODEXDB_TMP')
+        self.tmp_dir = temp_dir
+        self.result_path = os.path.join(temp_dir, 'result.csv') if temp_dir else None
+
     def execute(self, db_id, sql, timeout_s):
-       
-        self._prepare_db(db_id)
-        return self._execute(db_id, sql, timeout_s)
-    
-    def _execute(self, db_id, sql, timeout_s):
+        """Return (success, DataFrame, execution metadata)."""
+        from pathlib import Path
+        from codexdb.sql_execution import (
+            SQLValidationError, SQLExecutionError, execute_select
+        )
 
-        db_dir = self.catalog.db_dir(db_id)
-        db_path = os.path.join(db_dir, 'db.db')
+        db_path = self.override_db_path or (
+            Path(self.catalog.db_dir(db_id)) / f'{db_id}.sqlite'
+        )
         try:
-            with sqlite3.connect(db_path) as connection:
-                start_s = time.time()
-                result = pd.read_sql(sql, connection)
-                total_s = time.time() - start_s
-                print(f'Query Result Info: {result.info()}')
-
+            result, stats = execute_select(
+                sql, db_path, timeout_s=timeout_s,
+                max_rows=self.max_rows, max_opcodes=self.max_opcodes,
+            )
+            if self.result_path:
+                Path(self.result_path).parent.mkdir(parents=True, exist_ok=True)
                 result.to_csv(self.result_path, index=False)
-                
-            return True, result, {'execution_s': total_s}
-        except Exception as e:
-            print(f'Exception: {e}')
-            return False, pd.DataFrame(), {'execution_s': -1}
-    
-    def _prepare_db(self, db_id):
-        
-        db_dir = self.catalog.db_dir(db_id)
-        db_path = os.path.join(db_dir, 'db.db')
-        if os.path.exists(db_path):
-            try:
-                os.remove(db_path)
-            except Exception as e:
-                print(f"Error removing database file: {e}")
-        with sqlite3.connect(db_path) as connection:
-            schema = self.catalog.schema(db_id)
-            tables = schema['table_names_original']
-            for table in tables:
-                file_name = self.catalog.file_name(db_id, table)
-                table_path = os.path.join(db_dir, file_name)
-                df = pd.read_csv(table_path)
-                df.columns = df.columns.str.replace(' ', '_')
-                df.to_sql(table, connection, index=False, if_exists='replace')
+            return True, result, stats
+        except (SQLValidationError, SQLExecutionError, OSError, ValueError) as exc:
+            return False, pd.DataFrame(), {
+                'execution_s': -1,
+                'error_type': type(exc).__name__,
+                'error': str(exc),
+            }
