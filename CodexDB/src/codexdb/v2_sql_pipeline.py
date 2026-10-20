@@ -22,6 +22,14 @@ class _LiveSchemaCatalog:
         # Allows minimal in-memory test catalogs that implement schema().
         return self._catalog.schema(db_id)
 
+    def files(self, db_id):
+        if hasattr(self._catalog, 'file_name'):
+            return [
+                self._catalog.file_name(db_id, table)
+                for table in self.schema(db_id)['table_names_original']
+            ]
+        return self._catalog.files(db_id)
+
     def __getattr__(self, attribute):
         return getattr(self._catalog, attribute)
 
